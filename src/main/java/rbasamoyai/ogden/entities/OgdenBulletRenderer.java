@@ -15,7 +15,6 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import rbasamoyai.ogden.OgdenMod;
 
@@ -33,8 +32,8 @@ public class OgdenBulletRenderer extends EntityRenderer<OgdenBullet> {
         double displacement = entity.getDisplacement() + totalDiff.length() * partialTicks;
         boolean isTeleported = totalDiff.lengthSqr() > entity.getDeltaMovement().lengthSqr() * 4;
 
-        float yaw = isTeleported ? entity.getViewYRot(partialTicks) : (float) Math.atan2(totalDiff.x, totalDiff.z) * Mth.RAD_TO_DEG;
-        float pitch = isTeleported ? entity.getViewXRot(partialTicks) : (float) Math.atan2(totalDiff.y, totalDiff.horizontalDistance()) * Mth.RAD_TO_DEG;
+        float yaw = entity.getViewYRot(partialTicks);
+        float pitch = entity.getViewXRot(partialTicks);
         Quaternion q = Vector3f.YP.rotationDegrees(yaw + 180.0f);
         Quaternion q1 = Vector3f.XP.rotationDegrees(pitch);
         q.mul(q1);
@@ -43,7 +42,12 @@ public class OgdenBulletRenderer extends EntityRenderer<OgdenBullet> {
         poseStack.mulPose(q);
         poseStack.translate(0, entity.getBbHeight() / 2, 0);
 
-        float length = isTracer ? (float) Math.min(isTeleported ? 0 : totalDiff.length(), displacement) : 0.125f;
+        float length;
+        if (isTracer) {
+            length = (float) Math.min(isTeleported ? 0 : totalDiff.length(), displacement);
+        } else {
+            length = 0.125f;
+        }
         PoseStack.Pose lastPose = poseStack.last();
         Matrix4f pose = lastPose.pose();
         Matrix3f normal = lastPose.normal();

@@ -66,7 +66,7 @@ public abstract class OgdenProjectile<T extends AmmunitionProperties> extends Pr
         ChunkPos cpos = new ChunkPos(this.blockPosition());
         if (this.level.isClientSide || this.level.hasChunk(cpos.x, cpos.z)) {
             if (this.level instanceof ServerLevel slevel) {
-                if (true) { // TODO: config chunkloading
+                if (this.canChunkload()) {
                     RitchiesProjectileLib.queueForceLoad(slevel, this, cpos.x, cpos.z, false);
                 }
             }
@@ -89,13 +89,15 @@ public abstract class OgdenProjectile<T extends AmmunitionProperties> extends Pr
             this.displacement += newPos.distanceTo(oldPos);
 
             if (this.level instanceof ServerLevel slevel && !this.isRemoved()) {
-                if (true) { // TODO: config chunkloading
+                if (this.canChunkload()) {
                     ChunkPos cpos1 = new ChunkPos(this.blockPosition());
                     RitchiesProjectileLib.queueForceLoad(slevel, this, cpos1.x, cpos1.z, true);
                 }
             }
         }
     }
+
+    public boolean canChunkload() { return false; }
 
     public double getDisplacement() { return this.displacement; }
 

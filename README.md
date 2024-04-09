@@ -24,9 +24,6 @@ More to come...
 - Ammo block breaking
 
 
-- Server and client config
-
-
 - Ammo packing bench
 - Ammo packet config
     - Contents
@@ -35,6 +32,7 @@ More to come...
 - GeckoLib compat
     - Animation by action resource pack
     - Animation state resource pack
+    - Client config: animation type
 
 
 - KubeJS compat
