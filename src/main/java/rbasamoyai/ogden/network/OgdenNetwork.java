@@ -7,10 +7,11 @@ import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;
 import rbasamoyai.ogden.OgdenMod;
 import rbasamoyai.ogden.ammunition.AmmunitionPropertiesHandler.ClientboundSyncAmmunitionPropertiesPacket;
+import rbasamoyai.ogden.firearms.config.FirearmAcceptedAmmunitionHandler.ClientboundSyncFirearmAcceptedAmmunitionPacket;
 
 public class OgdenNetwork {
 
-    public static final String VERSION = "0.0.1";
+    public static final String VERSION = "1.0.0";
 
     public static final SimpleChannel INSTANCE = construct();
 
@@ -27,6 +28,7 @@ public class OgdenNetwork {
         addStandardPacket(channel, id++, ClientboundCheckChannelVersionPacket.class, ClientboundCheckChannelVersionPacket::new);
         addStandardPacket(channel, id++, ClientboundSyncOgdenProjectile.class, ClientboundSyncOgdenProjectile::new);
         addStandardPacket(channel, id++, ClientboundSyncAmmunitionPropertiesPacket.class, ClientboundSyncAmmunitionPropertiesPacket::copyOf);
+        addStandardPacket(channel, id++, ClientboundSyncFirearmAcceptedAmmunitionPacket.class, ClientboundSyncFirearmAcceptedAmmunitionPacket::copyOf);
 
         return channel;
     }

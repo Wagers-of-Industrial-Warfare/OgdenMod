@@ -14,7 +14,6 @@ import com.mojang.logging.LogUtils;
 
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
-import net.minecraft.core.Registry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -27,6 +26,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.PacketDistributor;
+import rbasamoyai.ogden.base.OgdenRegistryUtils;
 import rbasamoyai.ogden.entities.AmmunitionPropertiesEntity;
 import rbasamoyai.ogden.network.OgdenNetwork;
 import rbasamoyai.ogden.network.StandardPacket;
@@ -52,7 +52,7 @@ public class AmmunitionPropertiesHandler {
                 if (!el.isJsonObject()) continue;
                 ResourceLocation loc = entry.getKey();
                 try {
-                    Item item = Registry.ITEM.getOptional(loc).orElseThrow(() -> {
+                    Item item = OgdenRegistryUtils.getOptionalItemFromId(loc).orElseThrow(() -> {
                         return new JsonSyntaxException("Unknown item '" + loc + "'");
                     });
                     AmmunitionPropertiesSerializer<?> ser = SERIALIZERS.get(item);
@@ -69,7 +69,7 @@ public class AmmunitionPropertiesHandler {
     public static <P extends AmmunitionProperties, S extends AmmunitionPropertiesSerializer<P>> S registerSerializer(
             EntityType<? extends AmmunitionPropertiesEntity<P>> type, Item item, S ser) {
         if (SERIALIZERS.containsKey(item))
-            throw new IllegalStateException("Serializer for item " + Registry.ITEM.getKey(item) + " already registered");
+            throw new IllegalStateException("Serializer for item " + OgdenRegistryUtils.getItemId(item) + " already registered");
         SERIALIZERS.put(item, ser);
         return ser;
     }
@@ -81,7 +81,7 @@ public class AmmunitionPropertiesHandler {
     public static void writeBuf(FriendlyByteBuf buf) {
         buf.writeVarInt(PROPERTIES.size());
         for (Map.Entry<Item, AmmunitionProperties> entry : PROPERTIES.entrySet()) {
-            buf.writeResourceLocation(Registry.ITEM.getKey(entry.getKey()));
+            buf.writeResourceLocation(OgdenRegistryUtils.getItemId(entry.getKey()));
             toNetworkCasted(buf, entry.getKey(), entry.getValue());
         }
     }
@@ -96,12 +96,12 @@ public class AmmunitionPropertiesHandler {
         int sz = buf.readVarInt();
         for (int i = 0; i < sz; ++i) {
             ResourceLocation loc = buf.readResourceLocation();
-            Item item = Registry.ITEM.get(loc);
+            Item item = OgdenRegistryUtils.getItemFromId(loc);
             PROPERTIES.put(item, SERIALIZERS.get(item).fromNetwork(loc, buf));
         }
     }
 
-    public static void syncToServer(MinecraftServer server) {
+    public static void syncToAll(MinecraftServer server) {
         OgdenNetwork.INSTANCE.send(PacketDistributor.ALL.noArg(), new ClientboundSyncAmmunitionPropertiesPacket());
     }
 

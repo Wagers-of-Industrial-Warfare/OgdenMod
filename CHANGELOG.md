@@ -5,3 +5,4 @@ Changelog
 First Ogden version! Keep in mind that many things are still in development.
 - Added default bullets that can be illuminated and adapted to multiple ammunition types
 - Added ammunition configuration
+- Added firearm ammunition configuration

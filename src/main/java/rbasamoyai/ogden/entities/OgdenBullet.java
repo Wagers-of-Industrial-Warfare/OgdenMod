@@ -4,7 +4,6 @@ import org.jetbrains.annotations.Nullable;
 
 import com.mojang.math.Constants;
 
-import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -25,6 +24,7 @@ import net.minecraft.world.phys.Vec3;
 import rbasamoyai.ogden.OgdenConfigs;
 import rbasamoyai.ogden.OgdenMod;
 import rbasamoyai.ogden.ammunition.AmmunitionPropertiesHandler;
+import rbasamoyai.ogden.base.OgdenRegistryUtils;
 import rbasamoyai.ogden.index.OgdenEntityTypes;
 
 public class OgdenBullet extends OgdenProjectile<OgdenBulletProperties> implements AmmunitionPropertiesEntity<OgdenBulletProperties> {
@@ -72,15 +72,15 @@ public class OgdenBullet extends OgdenProjectile<OgdenBulletProperties> implemen
     @Override
     public void writeProjectileSyncData(CompoundTag tag) {
         super.writeProjectileSyncData(tag);
-        tag.putString("Bullet", Registry.ITEM.getKey(this.ammunitionItem).toString());
-        tag.putString("Firearm", Registry.ITEM.getKey(this.firearmItem).toString());
+        tag.putString("Bullet", OgdenRegistryUtils.getItemId(this.ammunitionItem).toString());
+        tag.putString("Firearm", OgdenRegistryUtils.getItemId(this.firearmItem).toString());
     }
 
     @Override
     public void readProjectileSyncData(CompoundTag tag) {
         super.readProjectileSyncData(tag);
-        this.ammunitionItem = tag.contains("Bullet", Tag.TAG_STRING) ? Registry.ITEM.get(new ResourceLocation(tag.getString("Bullet"))) : Items.AIR;
-        this.firearmItem = tag.contains("Firearm", Tag.TAG_STRING) ? Registry.ITEM.get(new ResourceLocation(tag.getString("Firearm"))) : Items.AIR;
+        this.ammunitionItem = tag.contains("Bullet", Tag.TAG_STRING) ? OgdenRegistryUtils.getItemFromId(new ResourceLocation(tag.getString("Bullet"))) : Items.AIR;
+        this.firearmItem = tag.contains("Firearm", Tag.TAG_STRING) ? OgdenRegistryUtils.getItemFromId(new ResourceLocation(tag.getString("Firearm"))) : Items.AIR;
     }
 
     public void setTracer(boolean tracer) { this.entityData.set(IS_TRACER, tracer); }
