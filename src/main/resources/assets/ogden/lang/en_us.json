@@ -6,5 +6,6 @@
   "itemGroup.ogden_base": "Ogden Base Items",
   "itemGroup.ogden_firearms": "Ogden Firearms",
   "itemGroup.ogden_ammo": "Ogden Ammunition Items",
-  "entity.ogden.bullet": "Bullet"
+  "entity.ogden.bullet": "Bullet",
+  "ogden.configgui.projectilesCanLoadChunks": "Projectiles Can Load Chunks"
 }

@@ -15,6 +15,7 @@ import net.minecraftforge.event.OnDatapackSyncEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import rbasamoyai.ogden.ammunition.AmmunitionPropertiesHandler;
@@ -42,8 +43,13 @@ public class OgdenMod {
         IEventBus forgeBus = MinecraftForge.EVENT_BUS;
 
         modBus.addListener(this::commonSetup);
+        modBus.addListener(this::onLoadConfig);
+        modBus.addListener(this::onReloadConfig);
+
         forgeBus.addListener(this::registerResourceListeners);
         forgeBus.addListener(this::onDatapackSync);
+
+        OgdenConfigs.registerConfigs();
 
         OgdenItems.ITEMS.register(modBus);
         OgdenEntityTypes.ENTITY_TYPES.register(modBus);
@@ -70,6 +76,14 @@ public class OgdenMod {
             ServerPlayer player = evt.getPlayer();
             AmmunitionPropertiesHandler.syncToPlayer(player);
         }
+    }
+
+    public void onLoadConfig(final ModConfigEvent.Loading evt) {
+        OgdenConfigs.onModConfigLoad(evt.getConfig());
+    }
+
+    public void onReloadConfig(final ModConfigEvent.Reloading evt) {
+        OgdenConfigs.onModConfigReload(evt.getConfig());
     }
 
     public static ResourceLocation resource(String path) { return new ResourceLocation(MOD_ID, path); }

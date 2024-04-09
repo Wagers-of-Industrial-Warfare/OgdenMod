@@ -22,6 +22,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import rbasamoyai.ogden.OgdenConfigs;
 import rbasamoyai.ogden.OgdenMod;
 import rbasamoyai.ogden.ammunition.AmmunitionPropertiesHandler;
 import rbasamoyai.ogden.index.OgdenEntityTypes;
@@ -152,6 +153,11 @@ public class OgdenBullet extends OgdenProjectile<OgdenBulletProperties> implemen
     @Override
     public OgdenBulletProperties getAmmunitionProperties() {
         return AmmunitionPropertiesHandler.getProperties(this.ammunitionItem) instanceof OgdenBulletProperties p ? p : null;
+    }
+
+    @Override
+    public boolean canChunkload() {
+        return OgdenConfigs.server().projectilesCanLoadChunks.get();
     }
 
 }
