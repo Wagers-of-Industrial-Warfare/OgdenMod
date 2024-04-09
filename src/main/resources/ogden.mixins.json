@@ -3,7 +3,7 @@
   "minVersion": "0.8",
   "package": "rbasamoyai.ogden.mixin",
   "compatibilityLevel": "JAVA_8",
-  "refmap": "Ogden.refmap.json",
+  "refmap": "ogden.refmap.json",
   "mixins": [
   ],
   "client": [

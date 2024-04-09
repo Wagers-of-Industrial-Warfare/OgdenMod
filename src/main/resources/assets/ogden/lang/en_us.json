@@ -1,0 +1,10 @@
+{
+  "death.attack.ogden.shot": "%1$s was shot by %2$s",
+  "death.attack.ogden.shot.item": "%1$s was shot by %2$s using %3$s",
+  "item.ogden.black_powder_rifle_cartridge": "Black Powder Rifle Cartridge",
+  "item.ogden.rifle_cartridge": "Rifle Cartridge",
+  "itemGroup.ogden_base": "Ogden Base Items",
+  "itemGroup.ogden_firearms": "Ogden Firearms",
+  "itemGroup.ogden_ammo": "Ogden Ammunition Items",
+  "entity.ogden.bullet": "Bullet"
+}

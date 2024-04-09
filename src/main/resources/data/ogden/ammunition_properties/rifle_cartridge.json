@@ -1,0 +1,7 @@
+{
+  "damage": 18,
+  "penetration": 5,
+  "knockback": 0.1,
+  "ignores_invulnerability": true,
+  "renders_invulnerable": false
+}
