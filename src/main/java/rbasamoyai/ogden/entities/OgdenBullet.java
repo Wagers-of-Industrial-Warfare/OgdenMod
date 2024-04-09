@@ -30,6 +30,7 @@ import rbasamoyai.ogden.index.OgdenEntityTypes;
 public class OgdenBullet extends OgdenProjectile<OgdenBulletProperties> implements AmmunitionPropertiesEntity<OgdenBulletProperties> {
 
     private static final EntityDataAccessor<Boolean> IS_TRACER = SynchedEntityData.defineId(OgdenBullet.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> TRACER_COLOR = SynchedEntityData.defineId(OgdenBullet.class, EntityDataSerializers.INT);
 
     private Item ammunitionItem = Items.AIR;
     private Item firearmItem = Items.AIR;
@@ -49,12 +50,14 @@ public class OgdenBullet extends OgdenProjectile<OgdenBulletProperties> implemen
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(IS_TRACER, false);
+        this.entityData.define(TRACER_COLOR, 0xFFD800); // A yellow-orange
     }
 
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putBoolean("Tracer", this.isTracer());
+        if (this.isTracer()) tag.putInt("TracerColor", this.getPackedTracerColor());
         tag.putFloat("PenetrationDamage", this.penetrationDamage);
     }
 
@@ -62,6 +65,7 @@ public class OgdenBullet extends OgdenProjectile<OgdenBulletProperties> implemen
     protected void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         this.setTracer(tag.getBoolean("Tracer"));
+        if (this.isTracer() && tag.contains("TracerColor", Tag.TAG_INT)) this.setTracerColor(tag.getInt("TracerColor"));
         this.penetrationDamage = tag.getFloat("PenetrationDamage");
     }
 
@@ -81,6 +85,10 @@ public class OgdenBullet extends OgdenProjectile<OgdenBulletProperties> implemen
 
     public void setTracer(boolean tracer) { this.entityData.set(IS_TRACER, tracer); }
     public boolean isTracer() { return this.entityData.get(IS_TRACER); }
+
+    public void setTracerColor(int r, int g, int b) { this.setTracerColor(r << 16 | g << 8 | b); }
+    public void setTracerColor(int packed) { this.entityData.set(TRACER_COLOR, packed); }
+    public int getPackedTracerColor() { return this.entityData.get(TRACER_COLOR); }
 
     @Override
     protected void onTickRotate() {
