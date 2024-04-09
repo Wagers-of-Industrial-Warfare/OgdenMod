@@ -52,9 +52,10 @@ public class OgdenBulletRenderer extends EntityRenderer<OgdenBullet> {
         Matrix4f pose = lastPose.pose();
         Matrix3f normal = lastPose.normal();
 
-        int r = isTracer ? 255 : 128;
-        int g = isTracer ? 254 : 128;
-        int b = isTracer ? 224 : 128;
+        int packedTracerColor = entity.getPackedTracerColor();
+        int r = isTracer ? (packedTracerColor >> 16) & 255 : 128;
+        int g = isTracer ? (packedTracerColor >> 8) & 255 : 128;
+        int b = isTracer ? packedTracerColor & 255 : 128;
         int light = isTracer ? LightTexture.FULL_BRIGHT : packedLight;
 
         float thickness = 1 / 32f;
