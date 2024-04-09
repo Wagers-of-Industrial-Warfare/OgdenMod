@@ -17,6 +17,8 @@ plugins {
 
 apply plugin: 'org.spongepowered.mixin'
 
+jarJar.enable()
+
 group = mod_group_id
 version = mod_version
 
@@ -83,18 +85,34 @@ minecraft {
 
 mixin {
     add sourceSets.main, "${mod_id}.refmap.json"
+}
 
-    config "${mod_id}.mixins.json"
+// Workaround for SpongePowered/MixinGradle#38
+afterEvaluate {
+    tasks.configureReobfTaskForReobfJar.mustRunAfter(tasks.compileJava)
+    tasks.configureReobfTaskForReobfJarJar.mustRunAfter(tasks.compileJava)
 }
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 repositories {
-
+    maven { // Ritchie's Projectile Library
+        url = "https://maven.realrobotix.me/master/"
+        content {
+            includeGroup("com.rbasamoyai")
+        }
+    }
 }
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+
+    // Ritchie's Projectile Library
+    jarJar("com.rbasamoyai:ritchiesprojectilelib:${rpl_version}+${minecraft_version}-forge") {
+        transitive = false
+        jarJar.ranged(it, '[1.0.0,1.0.1)')
+    }
+    implementation fg.deobf("com.rbasamoyai:ritchiesprojectilelib:${rpl_version}+${minecraft_version}-forge") { transitive = false }
 
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }
@@ -129,6 +147,14 @@ tasks.named('jar', Jar).configure {
 
     finalizedBy 'reobfJar'
 }
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+jar.finalizedBy('reobfJar')
+tasks.jarJar.finalizedBy('reobfJarJar')
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'

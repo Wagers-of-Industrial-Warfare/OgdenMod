@@ -1,22 +1,30 @@
 package rbasamoyai.ogden;
 
-import com.mojang.logging.LogUtils;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.RegistryEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.InterModComms;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
-import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
-import net.minecraftforge.event.server.ServerStartingEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 
-import java.util.stream.Collectors;
+import com.mojang.logging.LogUtils;
+
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.AddReloadListenerEvent;
+import net.minecraftforge.event.OnDatapackSyncEvent;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import rbasamoyai.ogden.ammunition.AmmunitionPropertiesHandler;
+import rbasamoyai.ogden.index.OgdenAmmoGroup;
+import rbasamoyai.ogden.index.OgdenBaseGroup;
+import rbasamoyai.ogden.index.OgdenEntityTypes;
+import rbasamoyai.ogden.index.OgdenFirearmsGroup;
+import rbasamoyai.ogden.index.OgdenItems;
+import rbasamoyai.ogden.index.OgdenProjectilePropertiesRegistry;
+import rbasamoyai.ogden.network.OgdenNetwork;
 
 @Mod(OgdenMod.MOD_ID)
 public class OgdenMod {
@@ -24,39 +32,43 @@ public class OgdenMod {
     public static final String MOD_ID = "ogden";
     private static final Logger LOGGER = LogUtils.getLogger();
 
+    public static final CreativeModeTab
+        BASE_TAB = new OgdenBaseGroup(),
+        FIREARMS_TAB = new OgdenFirearmsGroup(),
+        AMMO_TAB = new OgdenAmmoGroup();
+
     public OgdenMod() {
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::enqueueIMC);
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::processIMC);
+        IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
+        IEventBus forgeBus = MinecraftForge.EVENT_BUS;
 
-        MinecraftForge.EVENT_BUS.register(this);
+        modBus.addListener(this::commonSetup);
+        forgeBus.addListener(this::registerResourceListeners);
+        forgeBus.addListener(this::onDatapackSync);
+
+        OgdenItems.ITEMS.register(modBus);
+        OgdenEntityTypes.ENTITY_TYPES.register(modBus);
+
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> OgdenClient.init(modBus, forgeBus));
     }
 
-    private void setup(final FMLCommonSetupEvent event) {
-        LOGGER.info("HELLO FROM PREINIT");
-        LOGGER.info("DIRT BLOCK >> {}", Blocks.DIRT.getRegistryName());
+    private void commonSetup(final FMLCommonSetupEvent evt) {
+        evt.enqueueWork(() -> {
+            OgdenNetwork.init();
+            OgdenProjectilePropertiesRegistry.init();
+        });
     }
 
-    private void enqueueIMC(final InterModEnqueueEvent event) {
-        InterModComms.sendTo("ogden", "helloworld", () -> { LOGGER.info("Hello world from the MDK"); return "Hello world";});
+    private void registerResourceListeners(final AddReloadListenerEvent evt) {
+        evt.addListener(AmmunitionPropertiesHandler.ReloadListener.INSTANCE);
     }
 
-    private void processIMC(final InterModProcessEvent event) {
-        LOGGER.info("Got IMC {}", event.getIMCStream().
-                map(m->m.messageSupplier().get()).
-                collect(Collectors.toList()));
-    }
-
-    @SubscribeEvent
-    public void onServerStarting(ServerStartingEvent event) {
-        LOGGER.info("HELLO from server starting");
-    }
-
-    @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
-    public static class RegistryEvents {
-        @SubscribeEvent
-        public static void onBlocksRegistry(final RegistryEvent.Register<Block> blockRegistryEvent) {
-            LOGGER.info("HELLO from Register Block");
+    public void onDatapackSync(final OnDatapackSyncEvent evt) {
+        if (evt.getPlayer() == null) {
+            MinecraftServer server = evt.getPlayerList().getServer();
+            AmmunitionPropertiesHandler.syncToServer(server);
+        } else {
+            ServerPlayer player = evt.getPlayer();
+            AmmunitionPropertiesHandler.syncToPlayer(player);
         }
     }
 
