@@ -19,7 +19,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import rbasamoyai.ogden.OgdenConfigs;
 import rbasamoyai.ogden.OgdenMod;
@@ -106,9 +105,9 @@ public class OgdenBullet extends OgdenProjectile<OgdenBulletProperties> implemen
     }
 
     @Override
-    protected void onHitEntity(Entity entity) {
+    protected void onHitEntity(Entity entity, double hitTime) {
         //if (this.getProjectileMass() <= 0) return;
-        if (this.isRemoved())
+        if (this.isToBeRemoved())
             return;
         if (!this.level.isClientSide) {
             OgdenBulletProperties properties = this.getAmmunitionProperties();
@@ -116,15 +115,8 @@ public class OgdenBullet extends OgdenProjectile<OgdenBulletProperties> implemen
             DamageSource source = this.getEntityDamage();
 
             // TODO better bullet compat for other mods -- first aid and others
-            Vec3 start = this.position();
-            Vec3 end = start.add(this.getDeltaMovement());
-            float w = this.getBbWidth() * 0.55f;
-            float h = this.getBbHeight() * 0.55f;
-            AABB box = entity.getBoundingBox().inflate(w, h, w);
-
-            Vec3 hitPos = box.clip(start, end).orElse(entity.position());
-
-            float damage = this.getDamage(entity, hitPos);
+            Vec3 hitPos = this.position().add(this.getDeltaMovement().scale(hitTime));
+            float damage = this.getDamage(entity, hitPos, hitTime);
             float entityHealth = entity instanceof LivingEntity living ? living.getHealth() : 0;
 
             if (properties == null || properties.ignoresEntityArmor()) entity.invulnerableTime = 0;
@@ -135,12 +127,12 @@ public class OgdenBullet extends OgdenProjectile<OgdenBulletProperties> implemen
             float damageResisted = damage - entityHealth;
             this.penetrationDamage += damage + damageResisted;
             if (properties == null || this.penetrationDamage >= properties.penetration()) {
-                this.discard();
+                this.markForFutureRemoval();
             }
         }
     }
 
-    protected float getDamage(Entity target, Vec3 hitPos) {
+    protected float getDamage(Entity target, Vec3 hitPos, double hitTime) {
         float damage = 0;
         OgdenBulletProperties properties = this.getAmmunitionProperties();
         if (properties != null) damage += properties.damage();
