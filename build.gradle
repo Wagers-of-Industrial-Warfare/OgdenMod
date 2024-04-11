@@ -11,6 +11,7 @@ buildscript {
 plugins {
     id 'eclipse'
     id 'idea'
+    id 'maven-publish'
     id 'net.minecraftforge.gradle' version '[6.0.16,6.2)'
     id 'org.parchmentmc.librarian.forgegradle' version '1.+'
 }
@@ -20,7 +21,8 @@ apply plugin: 'org.spongepowered.mixin'
 jarJar.enable()
 
 group = mod_group_id
-version = mod_version
+String buildNumber = System.getenv("GITHUB_RUN_NUMBER")
+version = "${mod_version}+mc.${minecraft_version}${buildNumber ? "-build.${buildNumber}" : ""}"
 
 base {
     archivesName = mod_id
@@ -158,4 +160,27 @@ tasks.jarJar.finalizedBy('reobfJarJar')
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/wagers-of-industrial-warfare/ogdenmod")
+            credentials {
+                username = project.findProperty("gpr.user") as String ?: System.getenv("GITHUB_ACTOR")
+                password = project.findProperty("gpr.key") as String ?: System.getenv("GITHUB_TOKEN")
+            }
+        }
+        maven {
+            name = "realRobotixMaven"
+            url = uri("https://maven.realrobotix.me/technomancy")
+            credentials(PasswordCredentials)
+        }
+    }
 }
