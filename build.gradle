@@ -179,7 +179,7 @@ publishing {
         }
         maven {
             name = "realRobotixMaven"
-            url = uri("https://maven.realrobotix.me/technomancy")
+            url = uri("https://maven.realrobotix.me/ogden")
             credentials(PasswordCredentials)
         }
     }
