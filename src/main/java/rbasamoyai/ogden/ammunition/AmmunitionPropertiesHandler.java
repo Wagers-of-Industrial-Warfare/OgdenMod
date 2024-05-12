@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 import com.mojang.logging.LogUtils;
 
@@ -48,10 +49,11 @@ public class AmmunitionPropertiesHandler {
             PROPERTIES.clear();
 
             for (Map.Entry<ResourceLocation, JsonElement> entry : map.entrySet()) {
-                JsonElement el = entry.getValue();
-                if (!el.isJsonObject()) continue;
-                ResourceLocation loc = entry.getKey();
                 try {
+                    ResourceLocation loc = entry.getKey();
+                    JsonElement el = entry.getValue();
+                    if (!el.isJsonObject())
+                        throw new JsonParseException("Expected ammunition properties for '" + loc + "' to be a JSON object");
                     Item item = OgdenRegistryUtils.getOptionalItemFromId(loc).orElseThrow(() -> {
                         return new JsonSyntaxException("Unknown item '" + loc + "'");
                     });
@@ -93,6 +95,7 @@ public class AmmunitionPropertiesHandler {
     }
 
     public static void readBuf(FriendlyByteBuf buf) {
+        PROPERTIES.clear();
         int sz = buf.readVarInt();
         for (int i = 0; i < sz; ++i) {
             ResourceLocation loc = buf.readResourceLocation();

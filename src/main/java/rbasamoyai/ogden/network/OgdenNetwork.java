@@ -7,6 +7,7 @@ import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;
 import rbasamoyai.ogden.OgdenMod;
 import rbasamoyai.ogden.ammunition.AmmunitionPropertiesHandler.ClientboundSyncAmmunitionPropertiesPacket;
+import rbasamoyai.ogden.ammunition.clips.ClipPropertiesHandler.ClientboundSyncClipPropertiesPacket;
 import rbasamoyai.ogden.firearms.config.FirearmAcceptedAmmunitionHandler.ClientboundSyncFirearmAcceptedAmmunitionPacket;
 
 public class OgdenNetwork {
@@ -29,6 +30,7 @@ public class OgdenNetwork {
         addStandardPacket(channel, id++, ClientboundSyncOgdenProjectile.class, ClientboundSyncOgdenProjectile::new);
         addStandardPacket(channel, id++, ClientboundSyncAmmunitionPropertiesPacket.class, ClientboundSyncAmmunitionPropertiesPacket::copyOf);
         addStandardPacket(channel, id++, ClientboundSyncFirearmAcceptedAmmunitionPacket.class, ClientboundSyncFirearmAcceptedAmmunitionPacket::copyOf);
+        addStandardPacket(channel, id++, ClientboundSyncClipPropertiesPacket.class, ClientboundSyncClipPropertiesPacket::copyOf);
 
         return channel;
     }

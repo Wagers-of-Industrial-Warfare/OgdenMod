@@ -39,10 +39,16 @@ public class OgdenBullet extends OgdenProjectile<OgdenBulletProperties> implemen
 
 	public OgdenBullet(EntityType<? extends OgdenBullet> entityType, Level level) { super(entityType, level); }
 
-    public OgdenBullet(Level level, Item ammunitionItem, Item firearmItem) {
+    public OgdenBullet(Level level, Item ammunitionItem, Item firearmItem, double posX, double posY, double posZ) {
         super(OgdenEntityTypes.BULLET.get(), level);
+        this.setPos(posX, posY, posZ);
         this.ammunitionItem = ammunitionItem;
         this.firearmItem = firearmItem;
+    }
+
+    public OgdenBullet(Level level, Item ammunitionItem, Item firearmItem, LivingEntity living) {
+        this(level, ammunitionItem, firearmItem, living.getX(), living.getEyeY() - 0.1d, living.getZ());
+        this.setOwner(living);
     }
 
     @Override
