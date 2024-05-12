@@ -8,6 +8,7 @@ More to come...
 
 - Firearm data packing
     - Firearm action script
+       - Key handling
        - Boilerplate
        - Start of action
        - End of action
@@ -43,3 +44,4 @@ More to come...
 
 
 - Documentation for content creation
+
