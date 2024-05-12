@@ -25,32 +25,28 @@ public class OgdenBulletRenderer extends EntityRenderer<OgdenBullet> {
 
     @Override
     public void render(OgdenBullet entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffers, int packedLight) {
-        boolean isTracer = entity.isTracer();
         Vec3 start = new Vec3(entity.xOld, entity.yOld, entity.zOld);
-        Vec3 totalDiff = entity.position().subtract(start);
-        if (totalDiff.lengthSqr() < 1e-4d) totalDiff = Vec3.ZERO;
-        double displacement = entity.getDisplacement() + totalDiff.length() * partialTicks;
-        boolean isTeleported = totalDiff.lengthSqr() > entity.getDeltaMovement().lengthSqr() * 4;
+        Vec3 diff = entity.position().subtract(start);
+        double dlSqr = diff.lengthSqr();
+        boolean isFastButNotTeleported = 1e-4d <= dlSqr && dlSqr <= entity.getDeltaMovement().lengthSqr() * 4;
+        double diffLength = isFastButNotTeleported ? diff.length() : 0;
+        double displacement = entity.getDisplacement() - diffLength * (1 - partialTicks);
 
-        float yaw = entity.getViewYRot(partialTicks);
-        float pitch = entity.getViewXRot(partialTicks);
-        Quaternion q = Vector3f.YP.rotationDegrees(yaw + 180.0f);
-        Quaternion q1 = Vector3f.XP.rotationDegrees(pitch);
-        q.mul(q1);
-
-        poseStack.pushPose();
-        poseStack.mulPose(q);
-        poseStack.translate(0, entity.getBbHeight() / 2, 0);
-
+        int removalTicks = Math.max(0, entity.getRemovalTicks() - 1);
+        float subTick = entity.getCollisionSubTick();
+        boolean hasCollided = 0 <= subTick && subTick <= 1 && partialTicks + removalTicks > subTick;
+        boolean isTracer = entity.isTracer();
+        float tickDiff = partialTicks + removalTicks - subTick;
+        if (hasCollided) {
+            if (tickDiff > subTick) return;
+            diffLength *= 1 - tickDiff;
+        }
         float length;
         if (isTracer) {
-            length = (float) Math.min(isTeleported ? 0 : totalDiff.length(), displacement);
+            length = (float) Math.min(diffLength, displacement);
         } else {
             length = 0.125f;
         }
-        PoseStack.Pose lastPose = poseStack.last();
-        Matrix4f pose = lastPose.pose();
-        Matrix3f normal = lastPose.normal();
 
         int packedTracerColor = entity.getPackedTracerColor();
         int r = isTracer ? (packedTracerColor >> 16) & 255 : 128;
@@ -65,6 +61,20 @@ public class OgdenBulletRenderer extends EntityRenderer<OgdenBullet> {
         float x2 = thickness;
         float y2 = thickness;
         float z2 = length + thickness;
+
+        float yaw = entity.getViewYRot(partialTicks);
+        float pitch = entity.getViewXRot(partialTicks);
+        Quaternion q = Vector3f.YP.rotationDegrees(yaw + 180.0f);
+        Quaternion q1 = Vector3f.XP.rotationDegrees(pitch);
+        q.mul(q1);
+
+        poseStack.pushPose();
+        poseStack.mulPose(q);
+        poseStack.translate(0, entity.getBbHeight() / 2, 0);
+
+        PoseStack.Pose lastPose = poseStack.last();
+        Matrix4f pose = lastPose.pose();
+        Matrix3f normal = lastPose.normal();
 
         VertexConsumer builder = buffers.getBuffer(QUAD);
 

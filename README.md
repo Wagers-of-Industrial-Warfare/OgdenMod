@@ -8,13 +8,14 @@ More to come...
 
 - Firearm data packing
     - Firearm action script
+       - Key handling
        - Boilerplate
        - Start of action
        - End of action
        - NBT modification
        - NBT querying
        - Functions
-   - Firearm action properties
+    - Firearm action properties
         - Boilerplate
     - Firearm damage properties
         - Boilerplate
@@ -40,3 +41,7 @@ More to come...
 
 - Damage mods compat
     - First Aid
+
+
+- Documentation for content creation
+
