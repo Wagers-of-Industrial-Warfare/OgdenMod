@@ -4,6 +4,7 @@ import org.jetbrains.annotations.Nullable;
 
 import com.mojang.math.Constants;
 
+import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -19,11 +20,11 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import rbasamoyai.ogden.OgdenConfigs;
 import rbasamoyai.ogden.OgdenMod;
 import rbasamoyai.ogden.ammunition.AmmunitionPropertiesHandler;
-import rbasamoyai.ogden.base.OgdenRegistryUtils;
 import rbasamoyai.ogden.index.OgdenEntityTypes;
 
 public class OgdenBullet extends OgdenProjectile<OgdenBulletProperties> implements AmmunitionPropertiesEntity<OgdenBulletProperties> {
@@ -39,16 +40,10 @@ public class OgdenBullet extends OgdenProjectile<OgdenBulletProperties> implemen
 
 	public OgdenBullet(EntityType<? extends OgdenBullet> entityType, Level level) { super(entityType, level); }
 
-    public OgdenBullet(Level level, Item ammunitionItem, Item firearmItem, double posX, double posY, double posZ) {
+    public OgdenBullet(Level level, Item ammunitionItem, Item firearmItem) {
         super(OgdenEntityTypes.BULLET.get(), level);
-        this.setPos(posX, posY, posZ);
         this.ammunitionItem = ammunitionItem;
         this.firearmItem = firearmItem;
-    }
-
-    public OgdenBullet(Level level, Item ammunitionItem, Item firearmItem, LivingEntity living) {
-        this(level, ammunitionItem, firearmItem, living.getX(), living.getEyeY() - 0.1d, living.getZ());
-        this.setOwner(living);
     }
 
     @Override
@@ -77,15 +72,15 @@ public class OgdenBullet extends OgdenProjectile<OgdenBulletProperties> implemen
     @Override
     public void writeProjectileSyncData(CompoundTag tag) {
         super.writeProjectileSyncData(tag);
-        tag.putString("Bullet", OgdenRegistryUtils.getItemId(this.ammunitionItem).toString());
-        tag.putString("Firearm", OgdenRegistryUtils.getItemId(this.firearmItem).toString());
+        tag.putString("Bullet", Registry.ITEM.getKey(this.ammunitionItem).toString());
+        tag.putString("Firearm", Registry.ITEM.getKey(this.firearmItem).toString());
     }
 
     @Override
     public void readProjectileSyncData(CompoundTag tag) {
         super.readProjectileSyncData(tag);
-        this.ammunitionItem = tag.contains("Bullet", Tag.TAG_STRING) ? OgdenRegistryUtils.getItemFromId(new ResourceLocation(tag.getString("Bullet"))) : Items.AIR;
-        this.firearmItem = tag.contains("Firearm", Tag.TAG_STRING) ? OgdenRegistryUtils.getItemFromId(new ResourceLocation(tag.getString("Firearm"))) : Items.AIR;
+        this.ammunitionItem = tag.contains("Bullet", Tag.TAG_STRING) ? Registry.ITEM.get(new ResourceLocation(tag.getString("Bullet"))) : Items.AIR;
+        this.firearmItem = tag.contains("Firearm", Tag.TAG_STRING) ? Registry.ITEM.get(new ResourceLocation(tag.getString("Firearm"))) : Items.AIR;
     }
 
     public void setTracer(boolean tracer) { this.entityData.set(IS_TRACER, tracer); }
@@ -111,9 +106,9 @@ public class OgdenBullet extends OgdenProjectile<OgdenBulletProperties> implemen
     }
 
     @Override
-    protected void onHitEntity(Entity entity, double hitTime) {
+    protected void onHitEntity(Entity entity) {
         //if (this.getProjectileMass() <= 0) return;
-        if (this.isToBeRemoved())
+        if (this.isRemoved())
             return;
         if (!this.level.isClientSide) {
             OgdenBulletProperties properties = this.getAmmunitionProperties();
@@ -121,8 +116,15 @@ public class OgdenBullet extends OgdenProjectile<OgdenBulletProperties> implemen
             DamageSource source = this.getEntityDamage();
 
             // TODO better bullet compat for other mods -- first aid and others
-            Vec3 hitPos = this.position().add(this.getDeltaMovement().scale(hitTime));
-            float damage = this.getDamage(entity, hitPos, hitTime);
+            Vec3 start = this.position();
+            Vec3 end = start.add(this.getDeltaMovement());
+            float w = this.getBbWidth() * 0.55f;
+            float h = this.getBbHeight() * 0.55f;
+            AABB box = entity.getBoundingBox().inflate(w, h, w);
+
+            Vec3 hitPos = box.clip(start, end).orElse(entity.position());
+
+            float damage = this.getDamage(entity, hitPos);
             float entityHealth = entity instanceof LivingEntity living ? living.getHealth() : 0;
 
             if (properties == null || properties.ignoresEntityArmor()) entity.invulnerableTime = 0;
@@ -133,12 +135,12 @@ public class OgdenBullet extends OgdenProjectile<OgdenBulletProperties> implemen
             float damageResisted = damage - entityHealth;
             this.penetrationDamage += damage + damageResisted;
             if (properties == null || this.penetrationDamage >= properties.penetration()) {
-                this.markForFutureRemoval();
+                this.discard();
             }
         }
     }
 
-    protected float getDamage(Entity target, Vec3 hitPos, double hitTime) {
+    protected float getDamage(Entity target, Vec3 hitPos) {
         float damage = 0;
         OgdenBulletProperties properties = this.getAmmunitionProperties();
         if (properties != null) damage += properties.damage();
